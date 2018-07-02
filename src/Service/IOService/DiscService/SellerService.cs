@@ -24,5 +24,24 @@ namespace IOService.DiscService
         {
             return await _unitOfWork.GetRepository<Seller>().GetPagedListAsync();
         }
+
+        public async Task<Seller> GetSellerById(Int32 nId)
+        {
+            return await _unitOfWork.GetRepository<Seller>().GetFirstOrDefaultAsync(predicate: opt => opt.Id == nId);
+        }
+
+        public virtual bool ModifySeller(Seller seller)
+        {
+            try
+            {
+                var repo = _unitOfWork.GetRepository<Seller>();
+               
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
 }

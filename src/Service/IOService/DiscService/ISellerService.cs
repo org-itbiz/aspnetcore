@@ -11,5 +11,6 @@ namespace IOService.DiscService
     {
         Int32 GetSellerCount();
         Task<IPagedList<Seller>> GetList();
+        Task<Seller> GetSellerById(Int32 nId);
     }
 }

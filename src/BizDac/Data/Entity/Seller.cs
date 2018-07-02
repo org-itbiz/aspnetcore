@@ -14,5 +14,9 @@ namespace Data.Entity
         [Required]
         [Column("seller_code")]
         public string Code { get; set; }
+        [StringLength(30)]
+        [Required]
+        [Column("seller_name")]
+        public string Name { get; set; }
     }
 }

@@ -31,15 +31,26 @@ namespace web_api.Controllers
 
         // GET api/values/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public JsonResult Get(int id)
         {
-            return "value";
+            Task<Seller> seller = _sellerService.GetSellerById(1);
+            if (seller.Result != null)
+            {
+            }
+            return Json(seller.Result);
         }
 
         // POST api/values
         [HttpPost]
-        public void Post([FromBody]string value)
+        public JsonResult Post([FromBody]string value)
         {
+            Task<Seller> seller = _sellerService.GetSellerById(1);
+            if (seller.Result != null)
+            {
+                seller.Result.Name = "aaa";
+            }
+
+            return Json(seller.Result);
         }
 
         // PUT api/values/5
