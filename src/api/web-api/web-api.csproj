@@ -6,16 +6,24 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DocumentationFile></DocumentationFile>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="Helper\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="4.8.0" />
+    <PackageReference Include="Autofac" Version="4.8.1" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.2.2" />
-    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.8" />
+    <PackageReference Include="NLog" Version="4.5.5" />
+    <PackageReference Include="NLog.Config" Version="4.5.5" />
     <PackageReference Include="SwashBuckle.AspNetCore" Version="2.4.0" />
   </ItemGroup>
 
@@ -26,6 +34,15 @@
   <ItemGroup>
     <ProjectReference Include="..\..\BizDac\Data\Data.csproj" />
     <ProjectReference Include="..\..\Service\IOService\IOService.csproj" />
+    <ProjectReference Include="..\ApiInsights\ApiInsights.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="C:\Users\ilbnc\.nuget\packages\nlog.config\4.5.5\contentFiles\any\any\NLog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JSONSchema="" /></VisualStudio></ProjectExtensions>
 
 </Project>

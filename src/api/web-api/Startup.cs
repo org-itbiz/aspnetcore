@@ -1,17 +1,23 @@
 ﻿using System;
+using System.IO;
+using ApiInsights;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Data;
 using IOService.DiscService;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using NLog;
+using NLog.Config;
 using Swashbuckle.AspNetCore.Swagger;
 using web_api.Controllers;
 
@@ -30,12 +36,13 @@ namespace web_api
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<IOTCDbcontext>(options =>
-                options.UseMySql(Configuration.GetConnectionString("MySqlConnection")));
+                options.UseMySql(Configuration.GetConnectionString("read_conn")));
 
             services.AddUnitOfWork<IOTCDbcontext>();
-            //services.AddScoped(typeof(ISellerService), typeof(SellerService));
 
             services.Replace(ServiceDescriptor.Transient<IControllerActivator, ServiceBasedControllerActivator>());
+
+            //services.AddApiInsights();
 
             services.AddMvc()
                 .AddJsonOptions(options => {
@@ -57,7 +64,6 @@ namespace web_api
             });
 
             var containerBuilder = new ContainerBuilder();
-            //containerBuilder.RegisterType<SellerService>().As<ISellerService>();
             containerBuilder.RegisterModule<DefaultModule>();
             //
             containerBuilder.RegisterType<ValuesController>().PropertiesAutowired();
@@ -75,13 +81,38 @@ namespace web_api
             {
                 app.UseDeveloperExceptionPage();
             }
+            using (StreamReader apacheModRewriteStreamReader = File.OpenText("ApacheModRewrite.txt"))
+            using (StreamReader iisUrlRewriteStreamReader = File.OpenText("IISUrlRewrite.xml"))
+            {
+                var options = new RewriteOptions()
+                    .AddRedirect("redirect-rule/(.*)", "redirected/$1")
+                    .AddRewrite(@"^rewrite-rule/(\d+)/(\d+)", "rewritten?var1=$1&var2=$2",
+                        skipRemainingRules: true)
+                    //.AddApacheModRewrite(apacheModRewriteStreamReader)
+                    //.AddIISUrlRewrite(iisUrlRewriteStreamReader)
+                    //.Add(MethodRules.RedirectXMLRequests)
+                    .Add(new RedirectImageRequests(".png", "/png-images"))
+                    .Add(new RedirectImageRequests(".jpg", "/jpg-images"));
+
+                app.UseRewriter(options);
+            }
+
+            //app.Run(context => context.Response.WriteAsync(
+            //    $"Rewritten or Redirected Url: " +
+            //    $"{context.Request.Path + context.Request.QueryString}"));
 
             app.UseSwagger();
             app.UseSwaggerUI(c => {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebApi");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "web api");
             });
 
             app.UseMvc();
+            app.UseGlobalHttpContext();
+
+            //LogManager.Configuration = new XmlLoggingConfiguration(Path.Combine(env.ContentRootPath, "NLog.config"));
+            //LogManager.Configuration.Variables["root"] = env.ContentRootPath;
+            //LogManager.Configuration.Variables["connectionString"] = Configuration.GetConnectionString("logger_conn");
+
         }
 
         private class DefaultModule : Module

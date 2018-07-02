@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<nlog xmlns="http://www.nlog-project.org/schemas/NLog.xsd"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      autoReload="true"
+      internalLogLevel="Warn"
+      throwExceptions="true"
+      internalLogFile="${var:root}\logs\internal-nlog.txt">
+  <extensions>
+    <!--<add assembly="NLog.Web.AspNetCore"/>-->
+    <add assembly="ApiInsights"/>
+    <add assembly="web-api"/>
+  </extensions>
+
+  <!-- optional, add some variables
+  https://github.com/nlog/NLog/wiki/Configuration-file#variables
+  -->
+  <!--<variable name="myvar" value="myvalue"/>-->
+
+  <!--
+  See https://github.com/nlog/nlog/wiki/Configuration-file
+  for information on customizing logging rules and outputs.
+   -->
+  <targets>
+    <!--
+    Write events to a file with the date in the filename.
+    <target xsi:type="File" name="f" fileName="${basedir}/logs/${shortdate}.log"
+            layout="${longdate} ${uppercase:${level}} ${message}" />
+    -->
+    <target xsi:type="Null"
+         name="blackhole" />
+    <!--log 파일-->
+    <target xsi:type="File"
+        name="debughelper"
+        fileName="${var:root}\logs\debug_${date:format=yyyyMMdd}.log"
+        layout="${longdate}|${event-properties:item=EventId.Id}|${logger}|${uppercase:${level}}|${message} ${exception}" />
+    <!--apiinsight api 통계-->
+    <target name="apiinsight" xsi:type="Database"
+             dbProvider="MySql.Data.MySqlClient.MySqlConnection, MySql.Data"
+             connectionString="${var:logger_conn}">
+      <commandText>
+        INSERT INTO `apiinsight`
+        (`start`,
+        `time`,
+        `application`,
+        `method`,
+        `protocol`,
+        `host`,
+        `port`,
+        `path`,
+        `query`,
+        `httpstatus`,
+        `authenticate`,
+        `clientip`,
+        `serverip`)
+        VALUES
+        (
+        @start,
+        @time,
+        @application,
+        @method,
+        @protocol,
+        @host,
+        @port,
+        @path,
+        @query,
+        @httpstatus,
+        @authenticate,
+        @clientip,
+        @serverip);
+      </commandText>
+      <parameter name="@start" layout="${apiinsight-start}" />
+      <parameter name="@time" layout="${apiinsight-time}" />
+      <parameter name="@application" layout="${apiinsight-application}" />
+      <parameter name="@method" layout="${aspnet-Request-Method}" />
+      <parameter name="@protocol" layout="${apiinsight-protocol}" />
+      <parameter name="@host" layout="${apiinsight-host}" />
+      <parameter name="@port" layout="${apiinsight-port}" />
+      <parameter name="@path" layout="${apiinsight-path}" />
+      <parameter name="@query" layout="${apiinsight-query}" />
+      <parameter name="@httpstatus" layout="${apiinsight-httpstatus}"/>
+      <parameter name="@authenticate" layout="${apiinsight-authenticate}"/>
+      <parameter name="@clientip" layout="${apiinsight-clientip}" />
+      <parameter name="@serverip" layout="${apiinsight-serverip}" />
+    </target>
+    <!--log-->
+    <!--<target name="debughelper" xsi:type="Database"
+         dbProvider="MySql.Data.MySqlClient.MySqlConnection, MySql.Data"
+         connectionString="${var:logger_conn}">
+      <commandText>
+        insert into log (
+        application, logged, level, message,
+        logger, callsite, exception,ip,user,servername,url
+        ) values (
+        @application, @logged, @level, @message,
+        @logger, @callsite, @exception,@ip,@user,@servername,@url
+        );
+      </commandText>
+      <parameter name="@application" layout="${apiinsight-application}" />
+      <parameter name="@logged" layout="${date}" />
+      <parameter name="@level" layout="${level}" />
+      <parameter name="@message" layout="${message}" />
+      <parameter name="@logger" layout="${logger}" />
+      <parameter name="@callSite" layout="${callsite:filename=true}" />
+      <parameter name="@exception" layout="${apiinsight-request-exception}" />
+      <parameter name="@IP" layout="${aspnet-Request-IP}"/>
+      <parameter name="@User" layout="${apiinsight-request-user}"/>
+      <parameter name="@serverName" layout="${apiinsight-request-servername}" />
+      <parameter name="@url" layout="${apiinsight-request-url}" />
+    </target>-->
+  </targets>
+
+  <rules>
+    <!--기록 할 로그-->
+    <logger name="ApiInsights.*" minlevel="Trace" writeTo="apiinsight" />
+    <logger name="web-api.*" minlevel="Info" writeTo="log" />
+    <logger name="*" minlevel="Trace" maxlevel="Debug" writeTo="debughelper" />
+
+    <!--Skip Microsoft logs and so log only own log-->
+    <logger name="Microsoft.*" minlevel="Trace" writeTo="blackhole" final="true" />
+    <!--
+    Write all events with minimal level of Debug (So Debug, Info, Warn, Error and Fatal, but not Trace)  to "f"
+    <logger name="*" minlevel="Debug" writeTo="f" />
+    -->
+  </rules>
+</nlog>
